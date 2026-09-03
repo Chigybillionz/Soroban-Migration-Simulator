@@ -1115,6 +1115,13 @@ checksum = "cf8baf1c55e62ffcace7a9f06f4bd9cd3f0c4beb022d3b367256b91b87513d98"
 [[package]]
 name = "migration-engine"
 version = "0.1.0"
+dependencies = [
+ "serde",
+ "soroban-sdk",
+ "state-engine",
+ "stellar-xdr",
+ "thiserror 1.0.69",
+]
 
 [[package]]
 name = "migration_v1"
@@ -1768,6 +1775,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2",
+ "soroban-sdk",
  "thiserror 1.0.69",
 ]
 

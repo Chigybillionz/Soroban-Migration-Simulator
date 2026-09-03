@@ -1,6 +1,11 @@
 [package]
 name = "migration-engine"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
 
 [dependencies]
+state-engine = { path = "../state-engine" }
+soroban-sdk = { workspace = true, features = ["testutils"] }
+stellar-xdr = { version = "26.0.1", features = ["std"], default-features = false }
+serde = { version = "1.0", features = ["derive"] }
+thiserror = "1.0"

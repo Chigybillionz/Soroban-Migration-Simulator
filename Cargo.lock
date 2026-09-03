@@ -23,6 +23,13 @@ checksum = "683d7910e743518b0e34f1186f92494becacb047c7b6bf616c96772180fef923"
 [[package]]
 name = "analyzer"
 version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "stellar-xdr",
+ "thiserror 1.0.69",
+ "wasmparser",
+]
 
 [[package]]
 name = "android_system_properties"
@@ -2009,6 +2016,12 @@ dependencies = [
 [[package]]
 name = "wasm-diff"
 version = "0.1.0"
+dependencies = [
+ "analyzer",
+ "serde",
+ "serde_json",
+ "thiserror 1.0.69",
+]
 
 [[package]]
 name = "wasmi_arena"

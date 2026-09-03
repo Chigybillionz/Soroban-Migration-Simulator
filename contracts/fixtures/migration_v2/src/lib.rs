@@ -74,7 +74,7 @@ mod test {
     #[test]
     fn test_create_v2() {
         let env = Env::default();
-        let contract_id = env.register_contract(None, MigrationV2Contract);
+        let contract_id = env.register(MigrationV2Contract, ());
         let client = MigrationV2ContractClient::new(&env, &contract_id);
 
         let owner = Address::generate(&env);
@@ -90,7 +90,7 @@ mod test {
     #[test]
     fn test_migrate_v1_to_v2() {
         let env = Env::default();
-        let contract_id = env.register_contract(None, MigrationV2Contract);
+        let contract_id = env.register(MigrationV2Contract, ());
         let client = MigrationV2ContractClient::new(&env, &contract_id);
 
         let owner = Address::generate(&env);

@@ -1,0 +1,25 @@
+{
+    "contract_id": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD2KM",
+    "entries": [
+        {
+            "durability": "Persistent",
+            "key": {
+                "type": "Address",
+                "value": "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF"
+            },
+            "value": {
+                "type": "Struct",
+                "value": {
+                    "owner": {
+                        "type": "Address",
+                        "value": "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF"
+                    },
+                    "value": {
+                        "type": "U64",
+                        "value": 100
+                    }
+                }
+            }
+        }
+    ]
+}

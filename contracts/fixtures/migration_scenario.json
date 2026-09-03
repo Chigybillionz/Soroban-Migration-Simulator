@@ -1,0 +1,29 @@
+{
+  "scenario": "record_schema_upgrade",
+  "description": "Migration of a simple Record struct from V1 (without version field) to V2 (with version field).",
+  "invariants": [
+    "owner must remain unchanged",
+    "value must remain unchanged"
+  ],
+  "state_before": {
+    "key": {
+      "type": "Record",
+      "owner": "GDIY6AQQ75WMD4W46EYB7O6UYMHOCGQHJCQYNKP4XZB2Z2N5V4M5QO6B"
+    },
+    "value": {
+      "owner": "GDIY6AQQ75WMD4W46EYB7O6UYMHOCGQHJCQYNKP4XZB2Z2N5V4M5QO6B",
+      "value": 100
+    }
+  },
+  "state_after": {
+    "key": {
+      "type": "Record",
+      "owner": "GDIY6AQQ75WMD4W46EYB7O6UYMHOCGQHJCQYNKP4XZB2Z2N5V4M5QO6B"
+    },
+    "value": {
+      "owner": "GDIY6AQQ75WMD4W46EYB7O6UYMHOCGQHJCQYNKP4XZB2Z2N5V4M5QO6B",
+      "value": 100,
+      "version": 2
+    }
+  }
+}

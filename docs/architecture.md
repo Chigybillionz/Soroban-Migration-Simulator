@@ -102,30 +102,65 @@ ContractState (post)
 - **Invariant checking**: Post-migration invariant validation is a separate subsystem (future task).
 - **State diff engine**: Formal state diffing between pre/post states is a separate subsystem (future task).
 
-### Contract interaction boundary
+## Phase 4: State Diff Engine
 
-The migration engine uses SDK-native Rust types for contract interaction:
-- `env.register()` for contract registration
-- `env.as_contract()` + `env.storage()` for state seeding
-- `env.invoke_contract()` for migration execution
-- `env.to_ledger_snapshot()` for ledger inspection
+The **state diff engine** compares two `ContractState` snapshots and produces a structured, deterministic description of what changed.
 
-At the ledger inspection boundary, the engine converts:
 ```
-ScVal (XDR)  →  Val (SDK)  →  StateValue (state-engine)
+Pre-State (ContractState)
+    │
+    ▼
+State Diff Engine (ContractState::diff())
+    │
+    ▼
+StateDiff
+  ├─ added:      Vec<StateEntry>       (entries only in post)
+  ├─ removed:    Vec<StateEntry>       (entries only in pre)
+  ├─ modified:   Vec<ModifiedEntry>    (entries in both, value changed)
+  └─ unchanged:  Vec<StateEntry>       (entries in both, identical)
+        │
+        ▼
+Future: Invariant Evaluation
 ```
 
-This is the clean architecture: SDK types for interaction, XDR types at the snapshot boundary, and `StateValue` for the normalized representation.
+### Diff semantics:
 
-### Key design decisions:
+- **Added**: A logical storage entry exists in post-state but not pre-state.
+- **Removed**: A logical storage entry exists in pre-state but not post-state.
+- **Modified**: The logical entry exists in both states but its value changed. Each `ModifiedEntry` includes `before`, `after`, and `nested_changes`.
+- **Unchanged**: The logical entry exists in both states and its value is identical.
 
-1. **`key_prefix` parameter**: Storage keys for enum variants (e.g. `DataKey::Record(Address)`) require the variant name as a prefix. The engine builds `Vec[Symbol("Record"), Address]` from `StateValue::Address("...")` + `key_prefix = "Record"`.
+### Key semantics:
 
-2. **Panic recovery**: The Soroban host panics on invocation errors (non-existent functions, wrong argument counts). The engine wraps invocations in `std::panic::catch_unwind` to convert panics into typed `MigrationError::ContractInvocationFailure`.
+Entries are matched by their canonical `(durability, key)` pair. The engine builds BTreeMap lookups from both states and performs set operations. This is deterministic regardless of input ordering.
 
-3. **Contract filtering**: When capturing state from a ledger snapshot, the engine filters entries by contract ID to ensure only the simulated contract's data is captured, excluding other contracts' data and contract instance metadata.
+### Nested value diffing:
 
-4. **Durability preservation**: The engine preserves the original durability (`Persistent`, `Temporary`, `Instance`) from the ledger snapshot when converting to `StateEntry`.
+For modified entries, the engine provides structured `NestedChange` information:
+
+- **Struct**: Field-level comparison — detects added, removed, and modified fields.
+- **Vec**: Index-level comparison — detects added, removed, and modified items.
+- **Map**: Key-level comparison — detects added, removed, and modified entries by key.
+- **Option**: Detects transition between Some/None.
+- **Leaf types** (Address, U32, U64, Bool, Symbol, Bytes): No nested decomposition; the before/after values are the complete description.
+
+### Deterministic ordering:
+
+The output is sorted by canonical `(durability, key)` order within each category. Since `StateValue` derives `Ord` and `BTreeMap` provides ordered iteration, the diff is deterministic regardless of input ordering.
+
+## Pipeline Summary
+
+```
+Static Analysis → Storage Analysis → Migration Execution → State Diff → Invariant Validation
+     (Phase 1)        (Phase 2)           (Phase 3)          (Phase 4)      (Future)
+```
+
+### Separation of concerns:
+
+- **State representation**: `StateValue`, `StateEntry`, `ContractState` (state-engine)
+- **State capture**: `capture_state_from_snapshot()` (migration-engine)
+- **State comparison**: `ContractState::diff()` → `StateDiff` (state-engine)
+- **Invariant validation**: Future subsystem
 
 ## Important Limitations
 
@@ -137,3 +172,4 @@ This is the clean architecture: SDK types for interaction, XDR types at the snap
 - **A Successful WASM Diff Does Not Mean an Upgrade is Safe**: An upgrade might look identical at the interface level but contain catastrophic logic changes. Full validation requires the later invariant simulation layers of SMS.
 - **No network**: SMS operates entirely locally. No RPC, Horizon, testnet, or mainnet interactions.
 - **Simulation-only authorization**: `env.mock_all_auths()` is used for local simulation only. Production authorization would require real signatures.
+- **State diff nesting boundary**: The diff engine decomposes Struct, Vec, and Map at one level of nesting. Deeply nested structures show before/after values but not fully decomposed nested changes at arbitrary depth.

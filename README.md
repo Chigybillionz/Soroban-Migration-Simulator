@@ -155,7 +155,9 @@ See [ROADMAP.md](ROADMAP.md) for completed work and future contribution opportun
 
 ## License
 
-See [LICENSE](LICENSE) for licensing information.
+SMS is licensed under the [Apache License, Version 2.0](LICENSE).
+
+You may not use this file except in compliance with the License. You may obtain a copy of the License at <http://www.apache.org/licenses/LICENSE-2.0>.
 
 ## Security
 

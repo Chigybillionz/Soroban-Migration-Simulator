@@ -100,7 +100,6 @@ ContractState (post)
 - **Contract executable upgrade simulation**: The current milestone simulates migration execution and state transformation locally; full Soroban executable upgrade lifecycle simulation is a future capability.
 - **CLI interface**: The engine is library-only; CLI comes in a later task.
 - **Invariant checking**: Post-migration invariant validation is a separate subsystem (future task).
-- **State diff engine**: Formal state diffing between pre/post states is a separate subsystem (future task).
 
 ## Phase 4: State Diff Engine
 

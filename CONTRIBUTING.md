@@ -157,6 +157,12 @@ The following labels are used for issue organization:
 | `bug` | Bug reports |
 | `enhancement` | Feature requests |
 
+## License
+
+SMS is licensed under the [Apache License, Version 2.0](LICENSE). Contributions to SMS are made under the project's Apache-2.0 licensing framework, subject to the project's contribution terms and applicable law.
+
+By submitting a pull request, you agree that your contribution will be licensed under the same Apache License, Version 2.0.
+
 ## Questions?
 
 If you have questions about contributing, open a [discussion](https://github.com/Chigybillionz/Soroban-Migration-Simulator/discussions) or comment on an existing issue.

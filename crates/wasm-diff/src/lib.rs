@@ -22,9 +22,20 @@ pub struct ContractDiff {
 pub struct WasmDiff;
 
 impl WasmDiff {
-    pub fn compare(old: &ContractAnalysis, new: &ContractAnalysis) -> Result<ContractDiff, DiffError> {
-        let old_funcs: HashMap<_, _> = old.functions.iter().map(|f| (f.name.clone(), f.clone())).collect();
-        let new_funcs: HashMap<_, _> = new.functions.iter().map(|f| (f.name.clone(), f.clone())).collect();
+    pub fn compare(
+        old: &ContractAnalysis,
+        new: &ContractAnalysis,
+    ) -> Result<ContractDiff, DiffError> {
+        let old_funcs: HashMap<_, _> = old
+            .functions
+            .iter()
+            .map(|f| (f.name.clone(), f.clone()))
+            .collect();
+        let new_funcs: HashMap<_, _> = new
+            .functions
+            .iter()
+            .map(|f| (f.name.clone(), f.clone()))
+            .collect();
 
         let mut added_functions = Vec::new();
         let mut removed_functions = Vec::new();
@@ -44,8 +55,16 @@ impl WasmDiff {
             }
         }
 
-        let old_types: HashMap<_, _> = old.types.iter().map(|t| (t.name.clone(), t.clone())).collect();
-        let new_types: HashMap<_, _> = new.types.iter().map(|t| (t.name.clone(), t.clone())).collect();
+        let old_types: HashMap<_, _> = old
+            .types
+            .iter()
+            .map(|t| (t.name.clone(), t.clone()))
+            .collect();
+        let new_types: HashMap<_, _> = new
+            .types
+            .iter()
+            .map(|t| (t.name.clone(), t.clone()))
+            .collect();
 
         let mut added_types = Vec::new();
         let mut removed_types = Vec::new();
@@ -100,10 +119,21 @@ mod tests {
 
         let diff = WasmDiff::compare(&old, &new).unwrap();
 
-        assert!(diff.added_functions.iter().any(|f| f.name == "migrate_record"), "migrate_record should be added");
+        assert!(
+            diff.added_functions
+                .iter()
+                .any(|f| f.name == "migrate_record"),
+            "migrate_record should be added"
+        );
         // Because of how the fixture was written (Record -> RecordV2), Record is removed and RecordV2 is added
-        assert!(diff.removed_types.iter().any(|t| t.name == "Record"), "Record should be removed");
-        assert!(diff.added_types.iter().any(|t| t.name == "RecordV2"), "RecordV2 should be added");
+        assert!(
+            diff.removed_types.iter().any(|t| t.name == "Record"),
+            "Record should be removed"
+        );
+        assert!(
+            diff.added_types.iter().any(|t| t.name == "RecordV2"),
+            "RecordV2 should be added"
+        );
         // We also expect get_record to be changed because its return type changed from Record to RecordV2.
         // Wait, right now our analyzer doesn't extract input/output types fully yet, so `func != new_func` might not trigger if we don't populate inputs/outputs.
         // But that's fine for the basic diffing implementation.

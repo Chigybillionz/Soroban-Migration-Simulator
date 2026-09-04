@@ -30,7 +30,11 @@ impl MigrationV2Contract {
         if env.storage().persistent().has(&key) {
             panic!("record already exists");
         }
-        let record = RecordV2 { owner: owner.clone(), value, version: 2 };
+        let record = RecordV2 {
+            owner: owner.clone(),
+            value,
+            version: 2,
+        };
         env.storage().persistent().set(&key, &record);
     }
 
@@ -52,7 +56,7 @@ impl MigrationV2Contract {
 
     pub fn migrate_record(env: Env, owner: Address) {
         let key = DataKey::Record(owner.clone());
-        
+
         if let Some(old_record) = env.storage().persistent().get::<_, RecordV1>(&key) {
             let new_record = RecordV2 {
                 owner: old_record.owner,
@@ -79,7 +83,7 @@ mod test {
 
         let owner = Address::generate(&env);
         env.mock_all_auths();
-        
+
         client.create_record(&owner, &100);
         let record = client.get_record(&owner).unwrap();
         assert_eq!(record.owner, owner);
@@ -94,10 +98,13 @@ mod test {
         let client = MigrationV2ContractClient::new(&env, &contract_id);
 
         let owner = Address::generate(&env);
-        
+
         // Test 1: Create V1 state directly in storage (bypassing auth/API since it's prior state)
         let key = DataKey::Record(owner.clone());
-        let old_record = RecordV1 { owner: owner.clone(), value: 500 };
+        let old_record = RecordV1 {
+            owner: owner.clone(),
+            value: 500,
+        };
         env.as_contract(&contract_id, || {
             env.storage().persistent().set(&key, &old_record);
         });
@@ -107,8 +114,17 @@ mod test {
 
         // Test 3: Invariants preserved
         let new_record = client.get_record(&owner).unwrap();
-        assert_eq!(new_record.owner, old_record.owner, "Invariant failed: owner changed");
-        assert_eq!(new_record.value, old_record.value, "Invariant failed: value changed");
-        assert_eq!(new_record.version, 2, "Migration failed: version not initialized to 2");
+        assert_eq!(
+            new_record.owner, old_record.owner,
+            "Invariant failed: owner changed"
+        );
+        assert_eq!(
+            new_record.value, old_record.value,
+            "Invariant failed: value changed"
+        );
+        assert_eq!(
+            new_record.version, 2,
+            "Migration failed: version not initialized to 2"
+        );
     }
 }

@@ -39,10 +39,22 @@ pub struct StorageAnalysis {
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum FieldChange {
-    Added { name: String, type_ref: TypeRef },
-    Removed { name: String, type_ref: TypeRef },
-    TypeChanged { name: String, old: TypeRef, new: TypeRef },
-    Preserved { name: String },
+    Added {
+        name: String,
+        type_ref: TypeRef,
+    },
+    Removed {
+        name: String,
+        type_ref: TypeRef,
+    },
+    TypeChanged {
+        name: String,
+        old: TypeRef,
+        new: TypeRef,
+    },
+    Preserved {
+        name: String,
+    },
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -61,9 +73,13 @@ impl StorageAnalyzer {
         // pub fn get_record(env: Env, owner: Address) -> Option<Record>
         for func in &contract.functions {
             if func.name.starts_with("get_") {
-                let namespace = func.name.strip_prefix("get_").unwrap_or("Unknown").to_string();
-                
-                // Usually first param is Env, wait! The WASM ABI doesn't show `Env`. 
+                let namespace = func
+                    .name
+                    .strip_prefix("get_")
+                    .unwrap_or("Unknown")
+                    .to_string();
+
+                // Usually first param is Env, wait! The WASM ABI doesn't show `Env`.
                 // The analyzer strips it if it's not actually an argument in the WASM signature or the XDR function signature.
                 // In Soroban, `Env` is not present in `contractspecv0` function signature.
                 // Let's assume the first remaining argument is the key.
@@ -81,7 +97,12 @@ impl StorageAnalyzer {
                             TypeRef::Complex(inner.to_string())
                         }
                         TypeRef::Complex(s) if s.starts_with("Result<") => {
-                            let inner = s.trim_start_matches("Result<").split(',').next().unwrap_or("Unknown").trim();
+                            let inner = s
+                                .trim_start_matches("Result<")
+                                .split(',')
+                                .next()
+                                .unwrap_or("Unknown")
+                                .trim();
                             TypeRef::Complex(inner.to_string())
                         }
                         _ => output.clone(),
@@ -105,11 +126,20 @@ impl StorageAnalyzer {
 }
 
 impl StorageDiff {
-    pub fn compare(old: &StorageAnalysis, new: &StorageAnalysis, old_types: &[analyzer::TypeAnalysis], new_types: &[analyzer::TypeAnalysis]) -> Self {
+    pub fn compare(
+        old: &StorageAnalysis,
+        new: &StorageAnalysis,
+        old_types: &[analyzer::TypeAnalysis],
+        new_types: &[analyzer::TypeAnalysis],
+    ) -> Self {
         let mut changed_value_types = Vec::new();
 
         for old_entry in &old.entries {
-            if let Some(new_entry) = new.entries.iter().find(|e| e.namespace == old_entry.namespace) {
+            if let Some(new_entry) = new
+                .entries
+                .iter()
+                .find(|e| e.namespace == old_entry.namespace)
+            {
                 // If the underlying type changed (e.g. Record -> RecordV2 or structural changes)
                 // We resolve their underlying structural types
                 let old_struct = resolve_struct(&old_entry.value_type, old_types);
@@ -117,7 +147,9 @@ impl StorageDiff {
 
                 if let (Some(old_fields), Some(new_fields)) = (old_struct, new_struct) {
                     for old_field in &old_fields {
-                        if let Some(new_field) = new_fields.iter().find(|f| f.name == old_field.name) {
+                        if let Some(new_field) =
+                            new_fields.iter().find(|f| f.name == old_field.name)
+                        {
                             if old_field.type_ref != new_field.type_ref {
                                 changed_value_types.push(FieldChange::TypeChanged {
                                     name: old_field.name.clone(),
@@ -155,14 +187,17 @@ impl StorageDiff {
     }
 }
 
-fn resolve_struct(type_ref: &TypeRef, types: &[analyzer::TypeAnalysis]) -> Option<Vec<analyzer::FieldAnalysis>> {
+fn resolve_struct(
+    type_ref: &TypeRef,
+    types: &[analyzer::TypeAnalysis],
+) -> Option<Vec<analyzer::FieldAnalysis>> {
     match type_ref {
         TypeRef::Complex(name) => {
             if let Some(t) = types.iter().find(|t| t.name == *name) {
                 return Some(t.fields.clone());
             }
             None
-        },
+        }
         _ => None,
     }
 }
@@ -185,12 +220,22 @@ mod tests {
     fn test_a_v1_storage_analysis() {
         let wasm = fs::read(get_fixture_path("migration_v1")).unwrap();
         let analysis = Analyzer::analyze(&wasm).unwrap();
-        
+
         let storage = StorageAnalyzer::analyze(&analysis).unwrap();
-        let record_entry = storage.entries.iter().find(|e| e.namespace == "record").expect("Missing record entry");
-        
-        assert_eq!(record_entry.key_type, TypeRef::Simple("Address".to_string()));
-        assert_eq!(record_entry.value_type, TypeRef::Complex("Record".to_string()));
+        let record_entry = storage
+            .entries
+            .iter()
+            .find(|e| e.namespace == "record")
+            .expect("Missing record entry");
+
+        assert_eq!(
+            record_entry.key_type,
+            TypeRef::Simple("Address".to_string())
+        );
+        assert_eq!(
+            record_entry.value_type,
+            TypeRef::Complex("Record".to_string())
+        );
         assert_eq!(record_entry.confidence, Confidence::Inferred);
     }
 
@@ -198,12 +243,22 @@ mod tests {
     fn test_b_v2_storage_analysis() {
         let wasm = fs::read(get_fixture_path("migration_v2")).unwrap();
         let analysis = Analyzer::analyze(&wasm).unwrap();
-        
+
         let storage = StorageAnalyzer::analyze(&analysis).unwrap();
-        let record_entry = storage.entries.iter().find(|e| e.namespace == "record").expect("Missing record entry");
-        
-        assert_eq!(record_entry.key_type, TypeRef::Simple("Address".to_string()));
-        assert_eq!(record_entry.value_type, TypeRef::Complex("RecordV2".to_string()));
+        let record_entry = storage
+            .entries
+            .iter()
+            .find(|e| e.namespace == "record")
+            .expect("Missing record entry");
+
+        assert_eq!(
+            record_entry.key_type,
+            TypeRef::Simple("Address".to_string())
+        );
+        assert_eq!(
+            record_entry.value_type,
+            TypeRef::Complex("RecordV2".to_string())
+        );
         assert_eq!(record_entry.confidence, Confidence::Inferred);
     }
 
@@ -217,16 +272,30 @@ mod tests {
         let analysis_v2 = Analyzer::analyze(&wasm_v2).unwrap();
         let storage_v2 = StorageAnalyzer::analyze(&analysis_v2).unwrap();
 
-        let diff = StorageDiff::compare(&storage_v1, &storage_v2, &analysis_v1.types, &analysis_v2.types);
-        
+        let diff = StorageDiff::compare(
+            &storage_v1,
+            &storage_v2,
+            &analysis_v1.types,
+            &analysis_v2.types,
+        );
+
         // We expect version to be added, owner and value preserved
-        let version_added = diff.changed_value_types.iter().any(|f| matches!(f, FieldChange::Added { name, .. } if name == "version"));
+        let version_added = diff
+            .changed_value_types
+            .iter()
+            .any(|f| matches!(f, FieldChange::Added { name, .. } if name == "version"));
         assert!(version_added, "Missing version field addition");
 
-        let owner_preserved = diff.changed_value_types.iter().any(|f| matches!(f, FieldChange::Preserved { name } if name == "owner"));
+        let owner_preserved = diff
+            .changed_value_types
+            .iter()
+            .any(|f| matches!(f, FieldChange::Preserved { name } if name == "owner"));
         assert!(owner_preserved, "Missing owner preservation");
 
-        let value_preserved = diff.changed_value_types.iter().any(|f| matches!(f, FieldChange::Preserved { name } if name == "value"));
+        let value_preserved = diff
+            .changed_value_types
+            .iter()
+            .any(|f| matches!(f, FieldChange::Preserved { name } if name == "value"));
         assert!(value_preserved, "Missing value preservation");
     }
 
@@ -256,7 +325,7 @@ mod tests {
                 namespace: "record".to_string(),
             }],
         };
-        
+
         let json = serde_json::to_string(&storage).unwrap();
         assert!(json.contains("\"Address\""));
         assert!(json.contains("\"Unknown\""));

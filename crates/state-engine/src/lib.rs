@@ -1,9 +1,7 @@
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, HashSet};
 use thiserror::Error;
-use sha2::{Sha256, Digest};
-
-
 
 #[derive(Error, Debug)]
 pub enum StateError {
@@ -52,7 +50,10 @@ pub struct ContractState {
 
 impl ContractState {
     pub fn new(contract_id: String, entries: Vec<StateEntry>) -> Result<Self, StateError> {
-        let mut state = Self { contract_id, entries };
+        let mut state = Self {
+            contract_id,
+            entries,
+        };
         state.validate()?;
         state.canonicalize();
         Ok(state)
@@ -87,7 +88,9 @@ impl ContractState {
 
     pub fn canonicalize(&mut self) {
         self.entries.sort_unstable_by(|a, b| {
-            a.durability.cmp(&b.durability).then_with(|| a.key.cmp(&b.key))
+            a.durability
+                .cmp(&b.durability)
+                .then_with(|| a.key.cmp(&b.key))
         });
     }
 
@@ -153,7 +156,7 @@ mod tests {
     fn test_b_deserialize_v2_state() {
         let state = ContractState::from_json(&dummy_v2_json()).unwrap();
         assert_eq!(state.entries.len(), 1);
-        
+
         if let StateValue::Struct(fields) = &state.entries[0].value {
             assert!(fields.contains_key("version"));
         } else {
@@ -174,7 +177,8 @@ mod tests {
             value: StateValue::U64(200),
         };
 
-        let mut state_a = ContractState::new("C1".to_string(), vec![entry1.clone(), entry2.clone()]).unwrap();
+        let mut state_a =
+            ContractState::new("C1".to_string(), vec![entry1.clone(), entry2.clone()]).unwrap();
         let mut state_b = ContractState::new("C1".to_string(), vec![entry2, entry1]).unwrap();
 
         state_a.canonicalize();
@@ -196,7 +200,8 @@ mod tests {
             value: StateValue::U64(200),
         };
 
-        let state_a = ContractState::new("C1".to_string(), vec![entry1.clone(), entry2.clone()]).unwrap();
+        let state_a =
+            ContractState::new("C1".to_string(), vec![entry1.clone(), entry2.clone()]).unwrap();
         let state_b = ContractState::new("C1".to_string(), vec![entry2, entry1]).unwrap();
 
         assert_eq!(state_a.fingerprint(), state_b.fingerprint());
@@ -231,7 +236,7 @@ mod tests {
                 }
             ]
         }"#;
-        
+
         let res = ContractState::from_json(json);
         assert!(matches!(res, Err(StateError::DuplicateKey(_, _))));
     }

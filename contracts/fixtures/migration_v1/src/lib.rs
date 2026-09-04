@@ -23,7 +23,10 @@ impl MigrationV1Contract {
         if env.storage().persistent().has(&key) {
             panic!("record already exists");
         }
-        let record = Record { owner: owner.clone(), value };
+        let record = Record {
+            owner: owner.clone(),
+            value,
+        };
         env.storage().persistent().set(&key, &record);
     }
 
@@ -57,7 +60,7 @@ mod test {
 
         let owner = Address::generate(&env);
         env.mock_all_auths();
-        
+
         client.create_record(&owner, &100);
         let record = client.get_record(&owner).unwrap();
         assert_eq!(record.owner, owner);
@@ -72,10 +75,10 @@ mod test {
 
         let owner = Address::generate(&env);
         env.mock_all_auths();
-        
+
         client.create_record(&owner, &100);
         client.update_record(&owner, &200);
-        
+
         let record = client.get_record(&owner).unwrap();
         assert_eq!(record.value, 200);
     }
